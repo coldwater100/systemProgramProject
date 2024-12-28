@@ -57,6 +57,10 @@ int display_folder(const char *directory, const int print_start_idx, const int h
         return 0;
     }
 
+    // ncurses 색상 초기화
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK); // 파란색 글자, 검은색 배경
+
     int screen_height;
     int screen_width;
     getmaxyx(stdscr, screen_height, screen_width);
@@ -84,14 +88,21 @@ int display_folder(const char *directory, const int print_start_idx, const int h
 
             if (file_idx == highlighted_idx) {
                 attron(A_REVERSE);
-
                 strncpy(selected_filename, filelist[file_idx]->d_name, filename_size - 1);
                 selected_filename[filename_size - 1] = '\0';
+            }
+
+            if (S_ISDIR(file_stat.st_mode)) { // 디렉토리인 경우 색상 설정
+                attron(COLOR_PAIR(1));
             }
 
             move(current_screenY, 0);
             print_trimmed(filelist[file_idx]->d_name, 30);
             mvprintw(current_screenY, 30, "%-10s %-10ld %-20s", kind, file_stat.st_size, mod_time);
+
+            if (S_ISDIR(file_stat.st_mode)) { // 색상 해제
+                attroff(COLOR_PAIR(1));
+            }
 
             if (file_idx == highlighted_idx) {
                 attroff(A_REVERSE);

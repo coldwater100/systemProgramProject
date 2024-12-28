@@ -87,19 +87,19 @@ void execute_command_in_ncurses(const char *command) {
 // return 0 - error, current_dir not changed
 // return 1 - succeeded, current_dir not changed (일반 파일)
 int execute_command(char *current_dir, const char *selected_filename) {
-    char new_path[1024];
+    char full_path[1024];
 
     // (1) 예상 길이 확인
-    if (strlen(current_dir) + strlen(selected_filename) + 2 >= sizeof(new_path)) {
+    if (strlen(current_dir) + strlen(selected_filename) + 2 >= sizeof(full_path)) {
         mvprintw(1, 0, "Path 가 너무 길어 사용 불가능합니다");
         return 0;
     }
 
     // (2) snprintf로 파일 전체 경로 생성
-    snprintf(new_path, sizeof(new_path), "%s/%s", current_dir, selected_filename);
+    snprintf(full_path, sizeof(full_path), "%s/%s", current_dir, selected_filename);
 
     struct stat file_stat;
-    if (stat(new_path, &file_stat) == 0) {
+    if (stat(full_path, &file_stat) == 0) {
         switch (file_stat.st_mode & S_IFMT) {
             case S_IFDIR: // 디렉토리
                 if (strcmp(selected_filename, ".") == 0) {
@@ -115,7 +115,7 @@ int execute_command(char *current_dir, const char *selected_filename) {
                     }
                 } else {
                     // 하위 디렉토리 이동
-                    strncpy(current_dir, new_path, MAX_DIR_LENGTH - 1);
+                    strncpy(current_dir, full_path, MAX_DIR_LENGTH - 1);
                     current_dir[MAX_DIR_LENGTH - 1] = '\0';
                 }
                 return 99;
@@ -124,7 +124,7 @@ int execute_command(char *current_dir, const char *selected_filename) {
                     clear();
                     mvprintw(1, 0, "Selected = Executable file: %s", selected_filename);
                     getch();
-                    execute_command_in_ncurses(new_path);
+                    execute_command_in_ncurses(full_path);
                     return 1;
                 } else {  // 일반 파일 , 볼수 있으면 cat 해서 보여주기
                     clear();
@@ -132,7 +132,7 @@ int execute_command(char *current_dir, const char *selected_filename) {
                     mvprintw(3, 0, "Press Space to view the file...");
                     char ch;
                     while ((ch = getch()) != ' '); // space 키 입력 시 파일 보기
-                    display_file(new_path);
+                    display_file(full_path);
                     return 1;
                 }
             case S_IFLNK: // 심볼릭 링크(미구현)
