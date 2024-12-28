@@ -65,11 +65,11 @@ int display_folder(const char *directory, const int print_start_idx, const int h
     int screen_width;
     getmaxyx(stdscr, screen_height, screen_width);
 
-    mvprintw(0, 0, "======================");
+    mvprintw(0, 0, "===========================================");
     mvprintw(1, 0, "current directory :  %s", directory); 
-    mvprintw(2, 0, "----------------------");
+    mvprintw(2, 0, "-------------------------------------------");
     mvprintw(3, 0, "%-30s %-10s %-10s %-20s", "Filename", "Kind", "Size", "Modified");
-    mvprintw(4, 0, "----------------------");
+    mvprintw(4, 0, "-------------------------------------------");
 
     int print_start_screenY = RESERVED_LINE_UPPER;
     int print_end_screenY = screen_height - RESERVED_LINE_LOWER - 1;

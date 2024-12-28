@@ -6,10 +6,113 @@
 #include <locale.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <pthread.h>
+#include <sys/stat.h>
 
 #include "project_macro.h"
 
 void display_file(const char *file_path); // display.c에 있는 함수
+
+// 클립보드 관련 변수 정의
+char clipboard_file[1024] = "";  // 클립보드에 저장된 파일의 전체 경로
+int clipboard_action = 0;         // 클립보드 작업 유형 (0: 없음, 1: 복사, 2: 잘라내기)
+
+// 복사 작업을 처리하는 스레드 함수
+void *copy_file_thread(void *args) {
+    char **paths = (char **)args;
+    char *source = paths[0];
+    char *destination = paths[1];
+
+    FILE *src = fopen(source, "rb");
+    if (!src) {
+        mvprintw(LINES - 1, 0, "Error: Cannot open source file %s.            ", source);
+        refresh();
+        free(paths);
+        return NULL;
+    }
+
+    FILE *dest = fopen(destination, "wb");
+    if (!dest) {
+        mvprintw(LINES - 1, 0, "Error: Cannot create destination file %s.            ", destination);
+        refresh();
+        fclose(src);
+        free(paths);
+        return NULL;
+    }
+
+    char buffer[1024];
+    size_t bytes;
+    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+        fwrite(buffer, 1, bytes, dest);
+    }
+
+    fclose(src);
+    fclose(dest);
+    mvprintw(LINES - 1, 0, "File copied successfully: %s            ", destination);
+    free(paths);
+    refresh();
+    getch();
+    clear();
+    return NULL;
+}
+
+// 붙여넣기 작업 처리 함수
+void handle_paste(const char *current_dir) {
+    if (clipboard_action == 0) {
+        mvprintw(LINES - 1, 0, "Clipboard is empty.                        ");
+        getch();
+        refresh();
+        return;
+    }
+
+    char destination[1024];
+    snprintf(destination, sizeof(destination), "%s/%s", current_dir, strrchr(clipboard_file, '/') + 1);
+
+    if (clipboard_action == 1) {  // 복사 작업
+        char **paths = malloc(2 * sizeof(char *));
+        paths[0] = strdup(clipboard_file);
+        paths[1] = strdup(destination);
+
+        pthread_t tid;
+        pthread_create(&tid, NULL, copy_file_thread, paths);
+        pthread_detach(tid);
+    } else if (clipboard_action == 2) {  // 잘라내기 작업
+        if (rename(clipboard_file, destination) == 0) {
+            mvprintw(LINES - 1, 0, "File moved successfully: %s           ", destination);
+            clipboard_file[0] = '\0';
+            clipboard_action = 0;  // 클립보드 초기화
+            refresh();
+            getch();
+            clear();
+        } else {
+            mvprintw(LINES - 1, 0, "Error: Unable to move file.            ");
+            refresh();
+            getch();
+            clear();
+        }
+    }
+
+    refresh();
+}
+
+// 복사 작업 설정 함수
+void set_clipboard_copy(const char *file_path) {
+    strncpy(clipboard_file, file_path, sizeof(clipboard_file) - 1);
+    clipboard_action = 1;  // 복사 작업으로 설정
+    mvprintw(LINES - 1, 0, "File copied to clipboard: %s            ", clipboard_file);
+    getch();
+    refresh();
+}
+
+// 잘라내기 작업 설정 함수
+void set_clipboard_cut(const char *file_path) {
+    strncpy(clipboard_file, file_path, sizeof(clipboard_file) - 1);
+    clipboard_action = 2;  // 잘라내기 작업으로 설정
+    mvprintw(LINES - 1, 0, "File cut to clipboard: %s            ", clipboard_file);
+    getch();
+    refresh();
+}
+
 
 // 명령 실행 결과를 ncurses 화면에 출력하는 함수
 void execute_command_in_ncurses(const char *command) {
@@ -17,7 +120,7 @@ void execute_command_in_ncurses(const char *command) {
     pid_t pid;
 
     if (pipe(pipefd) == -1) {
-        mvprintw(LINES - 1, 0, "Error: Unable to create pipe.");
+        mvprintw(LINES - 1, 0, "Error: Unable to create pipe.            ");
         refresh();
         getch();
         return;
@@ -25,7 +128,7 @@ void execute_command_in_ncurses(const char *command) {
 
     pid = fork();
     if (pid == -1) {
-        mvprintw(LINES - 1, 0, "Error: Unable to fork process.");
+        mvprintw(LINES - 1, 0, "Error: Unable to fork process.            ");
         refresh();
         getch();
         return;
@@ -51,7 +154,7 @@ void execute_command_in_ncurses(const char *command) {
 
         FILE *fp = fdopen(pipefd[0], "r");
         if (!fp) {
-            mvprintw(LINES - 1, 0, "Error: Unable to open pipe.");
+            mvprintw(LINES - 1, 0, "Error: Unable to open pipe.            ");
             refresh();
             getch();
             return;

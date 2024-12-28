@@ -5,15 +5,20 @@
 #include <signal.h>
 #include <locale.h>
 #include <ncurses.h>
+#include <pthread.h> 
 
 #include "project_macro.h"
 
-// 함수 선언 추가
+// 함수 선언
 int display_folder(const char *directory, const int startline_idx, const int highlighted_idx, char *selected_filename, size_t filename_size);
 void display_file(const char *file_path);
 int execute_command(char *current_dir, const char *selected_filename);
 void execute_command_in_ncurses(const char *command);
 
+// 클립보드 관련 함수 선언
+void set_clipboard_copy(const char *file_path);
+void set_clipboard_cut(const char *file_path);
+void handle_paste(const char *current_dir);
 
 // ALRM 시그널 핸들러
 void handle_alarm(int sig) {
@@ -63,6 +68,17 @@ int main() {
         int screen_height, screen_width; // screen_width 유지
         getmaxyx(stdscr, screen_height, screen_width); // 올바른 lvalue 사용
 
+
+
+        char full_path[1024];
+        // (1) 예상 길이 확인
+        if (strlen(current_dir) + strlen(selected_filename) + 2 >= sizeof(full_path)) {
+            mvprintw(1, 0, "Path 가 너무 길어 사용 불가능합니다");
+            return 0;
+        }
+        // (2) snprintf로 파일 전체 경로 생성
+        snprintf(full_path, sizeof(full_path), "%s/%s", current_dir, selected_filename);
+
         switch (ch) {
             case KEY_UP:
                 if (highlighted_idx > 0) {
@@ -97,6 +113,15 @@ int main() {
             case 'q': // 종료
                 endwin();
                 return 0;
+            case 'c': // 복사
+                set_clipboard_copy(full_path);
+                break;
+            case 'x': // 잘라내기
+                set_clipboard_cut(full_path);
+                break;
+            case 'v': // 붙여넣기
+                handle_paste(current_dir);
+                break;
             default:
                 break;
         }

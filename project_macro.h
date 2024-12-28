@@ -10,5 +10,8 @@
 
 #define RESERVED_LINE_NO (RESERVED_LINE_UPPER+RESERVED_LINE_LOWER-1) // UI를 위해 남겨 둬야 할 라인 수
 
+#define CLIPBOARD_EMPTY 0
+#define CLIPBOARD_COPY 1
+#define CLIPBOARD_CUT 2
 
 #endif
