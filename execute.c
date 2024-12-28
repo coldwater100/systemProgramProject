@@ -11,6 +11,17 @@
 
 #include "project_macro.h"
 
+void generate_unique_filename(char *destination, const char *base_path, const char *filename) {
+    snprintf(destination, 1024, "%s/%s", base_path, filename);
+    if (access(destination, F_OK) != 0) return; //파일이 이미 존재해야지 계속 진행
+    char temp[1024];
+    do {
+        snprintf(temp, 1024, "%s/%s_copy", base_path, filename);
+    } while (access(temp, F_OK) == 0);
+    strncpy(destination, temp, 1024);
+}
+
+
 void display_file(const char *file_path); // display.c에 있는 함수
 
 // 클립보드 관련 변수 정의
@@ -50,7 +61,7 @@ void *copy_file_thread(void *args) {
     fclose(dest);
     mvprintw(LINES - 1, 0, "File copied successfully: %s            ", destination);
     free(paths);
-    refresh();
+    refresh();//스레드에서 작업이 끝나면 화면 refresh
     getch();
     clear();
     return NULL;
@@ -67,7 +78,7 @@ void handle_paste(const char *current_dir) {
 
     char destination[1024];
     snprintf(destination, sizeof(destination), "%s/%s", current_dir, strrchr(clipboard_file, '/') + 1);
-
+    generate_unique_filename(destination, current_dir, strrchr(clipboard_file, '/') + 1);
     if (clipboard_action == 1) {  // 복사 작업
         char **paths = malloc(2 * sizeof(char *));
         paths[0] = strdup(clipboard_file);
