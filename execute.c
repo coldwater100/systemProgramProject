@@ -100,8 +100,8 @@ void paste_clipboard_file(const char *current_dir) {
 
     char destination[1024];
     snprintf(destination, sizeof(destination), "%s/%s", current_dir, strrchr(clipboard_file, '/') + 1);
-    generate_unique_filename(destination, current_dir, strrchr(clipboard_file, '/') + 1);
     if (clipboard_action == 1) {  // 복사 작업
+        generate_unique_filename(destination, current_dir, strrchr(clipboard_file, '/') + 1);
         char **paths = malloc(2 * sizeof(char *));
         paths[0] = strdup(clipboard_file);
         paths[1] = strdup(destination);
