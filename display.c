@@ -59,7 +59,7 @@ int display_folder(const char *directory, const int print_start_idx, const int h
 
     // ncurses 색상 초기화
     start_color();
-    init_pair(1, COLOR_YELLOW, COLOR_BLACK); // 파란색 글자, 검은색 배경
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK); // 노란색 글자, 검은색 배경
 
     int screen_height;
     int screen_width;
