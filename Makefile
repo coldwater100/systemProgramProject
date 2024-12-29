@@ -5,7 +5,7 @@ CC = gcc
 CFLAGS = -g -Wall -D_XOPEN_SOURCE=600 -D_DEFAULT_SOURCE
 
 # ncursesw 라이브러리
-LDFLAGS = -lncursesw
+LDFLAGS = -lncursesw -lpthread
 
 # 파일들
 SRCS = main.c display.c execute.c
