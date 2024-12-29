@@ -13,7 +13,7 @@ OBJS = $(SRCS:.c=.o)
 HEADERS = project_macro.h
 
 # 실행 파일 이름
-TARGET = program
+TARGET = guiShell
 
 # 기본 빌드 목표
 all: $(TARGET)

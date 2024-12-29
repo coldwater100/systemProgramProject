@@ -262,13 +262,14 @@ int execute_command(char *current_dir, const char *selected_filename) {
                 if (file_stat.st_mode & S_IXUSR) {  // 실행파일  - 실행시키기
                     clear();
                     mvprintw(1, 0, "Selected = Executable file: %s", selected_filename);
+                    mvprintw(3, 0, "Press any key to execute the file...");
                     getch();
                     execute_command_in_ncurses(full_path);
                     return 1;
                 } else {  // 일반 파일 , 볼수 있으면 cat 해서 보여주기
                     clear();
                     mvprintw(1, 0, "Selected = file: %s", selected_filename);
-                    mvprintw(3, 0, "Press Space to view the file...");
+                    mvprintw(3, 0, "Press any key to view the file...");
                     char ch;
                     while ((ch = getch()) != ' '); // space 키 입력 시 파일 보기
                     display_file(full_path);
