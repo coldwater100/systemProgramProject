@@ -18,10 +18,10 @@ void execute_command_in_ncurses(const char *command);
 // 클립보드 관련 함수 선언
 void set_clipboard_copy(const char *file_path);
 void set_clipboard_cut(const char *file_path);
-void handle_paste(const char *current_dir);
+void paste_clipboard_file(const char *current_dir);
 
 // ALRM 시그널 핸들러
-void handle_alarm(int sig) {
+void aram_sig_handle(int sig) {
     endwin();
     printf("Program ended because of inactivity.\n");
     exit(0);
@@ -40,8 +40,8 @@ int main() {
     keypad(stdscr, TRUE);
 
     // 타임아웃 시그널 핸들러 설정
-    signal(SIGALRM, handle_alarm);
-    alarm(30); // 30초 타임아웃 설정
+    signal(SIGALRM, aram_sig_handle);
+    alarm(300); // 300초 타임아웃 설정
 
     char *home_dir = getenv("HOME");
     if (home_dir != NULL) {
@@ -63,7 +63,7 @@ int main() {
         // 키 입력 처리
         int ch = getch();
         if (ch != ERR) {
-            alarm(30); // 키 입력 시 타이머 재설정
+            alarm(300); // 키 입력 시 타이머 재설정
         }
         int screen_height, screen_width; // screen_width 유지
         getmaxyx(stdscr, screen_height, screen_width); // 올바른 lvalue 사용
@@ -120,7 +120,7 @@ int main() {
                 set_clipboard_cut(full_path);
                 break;
             case 'v': // 붙여넣기
-                handle_paste(current_dir);
+                paste_clipboard_file(current_dir);
                 break;
             default:
                 break;

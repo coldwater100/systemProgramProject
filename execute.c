@@ -68,7 +68,7 @@ void *copy_file_thread(void *args) {
 }
 
 // 붙여넣기 작업 처리 함수
-void handle_paste(const char *current_dir) {
+void paste_clipboard_file(const char *current_dir) {
     if (clipboard_action == 0) {
         mvprintw(LINES - 1, 0, "Clipboard is empty.                        ");
         getch();
@@ -87,6 +87,7 @@ void handle_paste(const char *current_dir) {
         pthread_t tid;
         pthread_create(&tid, NULL, copy_file_thread, paths);
         pthread_detach(tid);
+
     } else if (clipboard_action == 2) {  // 잘라내기 작업
         if (rename(clipboard_file, destination) == 0) {
             mvprintw(LINES - 1, 0, "File moved successfully: %s           ", destination);
