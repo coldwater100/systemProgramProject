@@ -12,15 +12,39 @@
 #include "project_macro.h"
 
 void generate_unique_filename(char *destination, const char *base_path, const char *filename) {
+    // 기본 파일 경로 생성
     snprintf(destination, 1024, "%s/%s", base_path, filename);
-    if (access(destination, F_OK) != 0) return; //파일이 이미 존재해야지 계속 진행
-    char temp[1024];
-    do {
-        snprintf(temp, 1024, "%s/%s_copy", base_path, filename);
-    } while (access(temp, F_OK) == 0);
-    strncpy(destination, temp, 1024);
-}
 
+    // 파일이 존재하지 않으면 그대로 반환
+    if (access(destination, F_OK) != 0) {
+        return;
+    }
+
+    // 파일이 존재하면 시간 정보를 포함하여 새로운 이름 생성
+    // 파일 확장자 추출
+    const char *ext = strrchr(filename, '.');
+    char name_without_ext[1024];
+   
+    if (ext != NULL) {
+        // 확장자가 있다면 이름과 확장자를 분리
+        snprintf(name_without_ext, ext - filename + 1, "%s", filename);
+    } else {
+        // 확장자가 없다면 그대로 전체 파일 이름 사용
+        snprintf(name_without_ext, sizeof(name_without_ext), "%s", filename);
+        ext = ""; // 확장자가 없는 경우 빈 문자열로 처리
+    }
+
+    // 시스템 시간을 기반으로 새 파일 이름 생성
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    char time_str[20];
+    snprintf(time_str, sizeof(time_str), "_%04d%02d%02d%02d%02d%02d",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+             tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+    // 새로운 파일 이름을 생성
+    snprintf(destination, 1024, "%s/%s%s%s", base_path, name_without_ext, time_str, ext);
+}
 
 void display_file(const char *file_path); // display.c에 있는 함수
 
@@ -61,9 +85,7 @@ void *copy_file_thread(void *args) {
     fclose(dest);
     mvprintw(LINES - 1, 0, "File copied successfully: %s            ", destination);
     free(paths);
-    refresh();//스레드에서 작업이 끝나면 화면 refresh
-    getch();
-    clear();
+    
     return NULL;
 }
 
@@ -87,7 +109,9 @@ void paste_clipboard_file(const char *current_dir) {
         pthread_t tid;
         pthread_create(&tid, NULL, copy_file_thread, paths);
         pthread_detach(tid);
-
+        refresh();//작업이 끝나면 화면 refresh
+        getch();
+        clear();
     } else if (clipboard_action == 2) {  // 잘라내기 작업
         if (rename(clipboard_file, destination) == 0) {
             mvprintw(LINES - 1, 0, "File moved successfully: %s           ", destination);
